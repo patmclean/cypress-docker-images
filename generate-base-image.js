@@ -2,14 +2,14 @@
 const path = require('path')
 const fs = require('fs')
 const shelljs = require('shelljs')
+const {isStrictSemver} = require('./utils')
 
 const versionTag = process.argv[2]
 
-if (!versionTag) {
+if (!versionTag || !isStrictSemver(versionTag)) {
   console.error('expected version tag argument like "13.6.0"')
   process.exit(1)
 }
-// TODO validate version tag to follow semver
 
 const outputFolder = path.join('base', versionTag)
 if (shelljs.test('-d', outputFolder)) {
@@ -35,12 +35,15 @@ RUN apt-get update && \\
   libgtk-3-0 \\
   libnotify-dev \\
   libgconf-2-4 \\
+  libgbm-dev \\
   libnss3 \\
   libxss1 \\
   libasound2 \\
   libxtst6 \\
   xauth \\
   xvfb \\
+  # install emoji font
+  fonts-noto-color-emoji \\
   # install Chinese fonts
   # this list was copied from https://github.com/jim3ma/docker-leanote
   fonts-arphic-bkai00mp \\

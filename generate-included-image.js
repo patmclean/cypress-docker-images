@@ -2,15 +2,15 @@
 const path = require('path')
 const fs = require('fs')
 const shelljs = require('shelljs')
+const {isStrictSemver} = require('./utils')
 
 const versionTag = process.argv[2]
 const baseImageTag = process.argv[3]
 
-if (!versionTag) {
+if (!versionTag || !isStrictSemver(versionTag)) {
   console.error('expected Cypress version argument like "3.8.3"')
   process.exit(1)
 }
-// TODO validate version tag to follow semver
 if (!baseImageTag) {
   console.error('expected base Docker image tag like "cypress/browsers:node12.6.0-chrome77"')
   process.exit(1)
@@ -43,6 +43,12 @@ FROM ${baseImageTag}
 # https://github.com/cypress-io/cypress/issues/1243
 ENV CI=1
 
+# disable shared memory X11 affecting Cypress v4 and Chrome
+# https://github.com/cypress-io/cypress-docker-images/issues/270
+ENV QT_X11_NO_MITSHM=1
+ENV _X11_NO_MITSHM=1
+ENV _MITSHM=0
+
 # should be root user
 RUN echo "whoami: $(whoami)"
 RUN npm config -g set user $(whoami)
@@ -62,6 +68,7 @@ RUN cypress verify
 # should be in the root user's home folder
 RUN cypress cache path
 RUN cypress cache list
+RUN cypress info
 
 # give every user read access to the "/root" folder where the binary is cached
 # we really only need to worry about the top folder, fortunately
@@ -72,6 +79,9 @@ RUN chmod 755 /root
 # otherwise the base image might have old versions
 RUN npm i -g yarn@latest npm@latest
 
+# should print Cypress version
+# plus Electron and bundled Node versions
+RUN cypress version
 RUN echo  " node version:    $(node -v) \\n" \\
   "npm version:     $(npm -v) \\n" \\
   "yarn version:    $(yarn -v) \\n" \\

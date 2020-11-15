@@ -2,7 +2,7 @@
 
 [![Docker Pulls](https://img.shields.io/docker/pulls/cypress/included.svg?maxAge=604800)](https://hub.docker.com/r/cypress/included/)
 
-Docker image with operating system and Cypress installed globally.
+> Docker images with all operating system dependencies, Cypress, and some pre-installed browsers.
 
 Name + Tag | Base image
 --- | ---
@@ -22,12 +22,35 @@ Name + Tag | Base image
 [cypress/included:4.0.0](4.0.0) | `cypress/browsers:node13.6.0-chrome-80-ff72`
 [cypress/included:4.0.1](4.0.1) | `cypress/browsers:node13.6.0-chrome-80-ff72`
 [cypress/included:4.0.2](4.0.2) | `cypress/browsers:node13.6.0-chrome-80-ff72`
+[cypress/included:4.1.0](4.1.0) | `cypress/browsers:node12.16.1-chrome-80-ff73`
+[cypress/included:4.2.0](4.2.0) | `cypress/browsers:node12.13.0-chrome80-ff74`
+[cypress/included:4.3.0](4.3.0) | `cypress/browsers:node12.13.0-chrome80-ff74`
+[cypress/included:4.4.0](4.4.0) | `cypress/browsers:node12.13.0-chrome80-ff74`
+[cypress/included:4.4.1](4.4.1) | `cypress/browsers:node12.13.0-chrome80-ff74`
+[cypress/included:4.5.0](4.5.0) | `cypress/browsers:node12.13.0-chrome80-ff74`
+[cypress/included:4.6.0](4.6.0) | `cypress/browsers:node12.16.2-chrome81-ff75`
+[cypress/included:4.7.0](4.7.0) | `cypress/browsers:node12.16.2-chrome81-ff75`
+[cypress/included:4.8.0](4.8.0) | `cypress/browsers:node12.16.2-chrome81-ff75`
+[cypress/included:4.9.0](4.9.0) | `cypress/browsers:node12.16.2-chrome81-ff75`
+[cypress/included:4.10.0](4.10.0) | `cypress/browsers:node12.14.1-chrome83-ff77`
+[cypress/included:4.11.0](4.11.0) | `cypress/browsers:node12.14.1-chrome83-ff77`
+[cypress/included:4.12.0](4.12.0) | `cypress/browsers:node12.18.0-chrome83-ff77`
+[cypress/included:4.12.1](4.12.1) | `cypress/browsers:node12.18.0-chrome83-ff77`
+[cypress/included:5.0.0](5.0.0) | `cypress/browsers:node12.18.0-chrome83-ff77`
+[cypress/included:5.1.0](5.1.0) | `cypress/browsers:node12.18.0-chrome83-ff77`
+[cypress/included:5.2.0](5.2.0) | `cypress/browsers:node12.18.0-chrome83-ff77`
+[cypress/included:5.3.0](5.3.0) | `cypress/browsers:node12.14.1-chrome85-ff81`
+[cypress/included:5.4.0](5.4.0) | `cypress/browsers:node12.14.1-chrome85-ff81`
+[cypress/included:5.5.0](5.5.0) | `cypress/browsers:node12.14.1-chrome85-ff81`
+[cypress/included:5.6.0](5.6.0) | `cypress/browsers:node12.14.1-chrome85-ff81`
 
 This image should be enough to run Cypress tests headlessly or in the interactive mode with a single Docker command like this:
 
 ```shell
 $ docker run -it -v $PWD:/e2e -w /e2e cypress/included:3.3.2
 ```
+
+## Debug
 
 If you want to see the [Cypress debug logs](https://on.cypress.io/debugging#Print-DEBUG-logs) during the run, pass environment variable `DEBUG`:
 
@@ -38,6 +61,51 @@ $ docker run -it -v $PWD:/e2e -w /e2e -e DEBUG=cypress:* cypress/included:3.8.1
   cypress:cli:cli program parsing arguments +3ms
   ...
 ```
+
+## Entry
+
+These images have its entry point set to `cypress run`. If you want to run a different command, you need to set `--entrypoint=cypress` and specify arguments AFTER the image name. For example, to print the Cypress information using `cypress info` command
+
+```shell
+$ docker run -it --entrypoint=cypress cypress/included:4.2.0 info
+Displaying Cypress info...
+
+Detected 2 browsers installed:
+
+1. Chrome
+  - Name: chrome
+  - Channel: stable
+  - Version: 80.0.3987.116
+  - Executable: google-chrome
+
+2. Firefox
+  - Name: firefox
+  - Channel: stable
+  - Version: 74.0
+  - Executable: firefox
+
+Note: to run these browsers, pass <name>:<channel> to the '--browser' field
+
+Examples:
+- cypress run --browser firefox
+- cypress run --browser chrome
+
+Learn More: https://on.cypress.io/launching-browsers
+
+Proxy Settings: none detected
+Environment Variables:
+CYPRESS_CACHE_FOLDER: /root/.cache/Cypress
+
+Application Data: /root/.config/cypress/cy/development
+Browser Profiles: /root/.config/cypress/cy/development/browsers
+Binary Caches: /root/.cache/Cypress
+
+Cypress Version: 4.2.0
+System Platform: linux (Debian - 10.1)
+System Memory: 2.09 GB free 285 MB
+```
+
+## Browser
 
 If you want to use a different browser (assuming it is installed in the container) use:
 
@@ -110,3 +178,18 @@ You can quickly run your tests in GitHub Actions using these images, see [cypres
 ## GitLab CI
 
 You can use the included images to run Cypress tests on GitLab CI, see how in [cypress-example-included](https://gitlab.com/cypress-io/cypress-example-included) repository.
+
+## Wait-on
+
+If you want to run Cypress after a server has started, we suggest using [wait-on](https://github.com/jeffbski/wait-on#readme) utility. To use it from the `cypress/included` image, you need to disable the default entrypoint and set a new command like this:
+
+```shell
+# execute the Cypress container once
+docker run --rm \ # remove container after finish
+  -v ./e2e:/e2e \ # map current folder to "e2e" folder
+  --workdir=/e2e \
+  --entrypoint="" \ # remove default entrypoint command
+  cypress/included:4.11.0 \
+  # wait for the local site to respond
+  # then run Cypress tests
+  /bin/bash -c 'npx wait-on http://127.0.0.1:3000 && cypress run'
